@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "scripts" / "check_cos_release_policy.py"
-POLICY_PATH = ROOT / "cos-release-policy.json"
+POLICY_PATH = ROOT / "contracts" / "cos-release-policy.json"
 
 
 def load_module():
@@ -189,4 +189,4 @@ def test_install_manifest_ships_cos_release_checker_and_policy() -> None:
     manifest = json.loads((ROOT / "install-manifest.json").read_text(encoding="utf-8"))
     includes = set(manifest["include"])
     assert "scripts/check_cos_release_policy.py" in includes
-    assert "cos-release-policy.json" in includes
+    assert "contracts/cos-release-policy.json" in includes
