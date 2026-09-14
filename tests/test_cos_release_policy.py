@@ -169,3 +169,24 @@ def test_fixture_cli_writes_machine_readable_stage_decision(tmp_path: Path) -> N
     report = json.loads(output.read_text(encoding="utf-8"))
     assert report["decision"] == "READY_TO_STAGE_REBASE"
     assert report["live_install_authorized"] is False
+
+
+def test_update_guard_documents_cos_release_and_live_install_boundary() -> None:
+    skill = " ".join((ROOT / "skills" / "mcp-update-guard" / "SKILL.md").read_text(encoding="utf-8").split())
+    policy_doc = " ".join((ROOT / "docs" / "UPSTREAM_RUNTIME_POLICY.md").read_text(encoding="utf-8").split())
+    assert "python scripts/check_cos_release_policy.py" in skill
+    assert "latest stable published GitHub Release" in skill
+    assert "silence alone never authorizes replacement or resubmission" in skill
+    assert "READY_TO_STAGE_REBASE is staging authority only" in skill
+    assert "reload the matching companion extension" in skill
+    assert "refresh the affected ChatGPT tabs and connectors" in skill
+    assert "Chat On Steroids release continuity" in policy_doc
+    assert "unreleased `main`" in policy_doc
+    assert "active or uncertain exact work blocks replacement" in policy_doc
+
+
+def test_install_manifest_ships_cos_release_checker_and_policy() -> None:
+    manifest = json.loads((ROOT / "install-manifest.json").read_text(encoding="utf-8"))
+    includes = set(manifest["include"])
+    assert "scripts/check_cos_release_policy.py" in includes
+    assert "cos-release-policy.json" in includes
