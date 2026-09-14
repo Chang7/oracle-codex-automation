@@ -65,5 +65,27 @@ adapters. The managed ChatGPT workspace service explicitly sets
 `DEVSPACE_SUBAGENTS=false`; upstream promotion does not authorize or silently
 enable that separate execution surface.
 
+## Chat On Steroids release continuity
+
+Chat On Steroids is checked separately because its authoritative stable channel
+is GitHub Releases rather than the npm-only v2 runtime policy above. The
+machine-readable policy is [`cos-release-policy.json`](../cos-release-policy.json),
+and `python scripts/check_cos_release_policy.py --installed-version <version>`
+performs a read-only candidate check.
+
+The checker selects only the newest non-draft, non-prerelease published release.
+An unreleased `main` version is not a promotion candidate merely because its
+package version is higher. The matching companion extension archive is required
+before a candidate is stageable. A customized local bundle also requires its
+customization rebase to be independently verified.
+
+`READY_TO_STAGE_REBASE` means only that source staging/rebase may proceed. It
+does not authorize live installation, restart, promotion, task creation, or a
+new browser session. Active or uncertain exact work blocks replacement, and
+elapsed silence never proves that work ended. After a separately authorized
+promotion in a proven quiescent window, reload the matching companion extension
+and refresh the affected ChatGPT tabs and connectors before treating the new
+app/extension pair as ready.
+
 This policy intentionally optimizes for fast upstream bug/UI fixes without executing an
 unreviewed moving `latest` tag on a user's machine.
