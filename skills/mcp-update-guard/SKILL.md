@@ -42,8 +42,8 @@ the read-only candidate check.
   companion-extension promotion cannot silently drift apart.
 - A customized local CoS bundle must complete a verified customization rebase
   before it is eligible for staging.
-- Active or uncertain exact work blocks runtime replacement. **Silence alone
-  never authorizes replacement or resubmission**; preserve the existing exact
+- Active or uncertain exact work blocks runtime replacement; **silence alone
+  never authorizes replacement or resubmission**. Preserve the existing exact
   task/session/command identity until terminal evidence or an explicit boundary.
 - `READY_TO_STAGE_REBASE is staging authority only`; it is never permission for
   the checker to install, restart, promote, create a task, or create a browser
