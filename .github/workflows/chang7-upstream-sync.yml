@@ -1,0 +1,92 @@
+name: Chang7 upstream sync
+on:
+  schedule:
+    - cron: '2-59/5 * * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/chang7-upstream-sync.yml'
+permissions:
+  contents: write
+concurrency:
+  group: chang7-upstream-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: github.repository_owner == 'Chang7'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Preserve user edits and merge upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REPOSITORY_ID: '1321265244'
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from urllib.request import Request, build_opener, HTTPRedirectHandler
+          from urllib.error import HTTPError
+          from urllib.parse import quote
+          
+          MANAGED = '.github/workflows/chang7-upstream-sync.yml'
+          
+          def eligible(comparison):
+              files = comparison.get('files')
+              return isinstance(files, list) and all(
+                  f.get('filename') == MANAGED and f.get('status') == 'added'
+                  and not f.get('previous_filename') for f in files)
+          
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+          
+          def request(method, path, data=None):
+              req = Request('https://api.github.com' + path, method=method,
+                            data=json.dumps(data).encode() if data is not None else None,
+                            headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                                     'Accept': 'application/vnd.github+json',
+                                     'X-GitHub-Api-Version': '2026-03-10',
+                                     'Content-Type': 'application/json'})
+              with build_opener(NoRedirect).open(req, timeout=30) as response:
+                  body = response.read()
+                  return json.loads(body) if body else {}
+          
+          def main():
+              name = os.environ['GITHUB_REPOSITORY']
+              repo = request('GET', '/repos/' + name)
+              assert repo['owner']['login'].lower() == 'chang7', 'Wrong owner'
+              assert str(repo['id']) == os.environ['EXPECTED_REPOSITORY_ID'], 'Wrong repository ID'
+              assert repo['fork'] and not repo['archived'] and not repo['disabled'], 'Inactive fork'
+              parent = repo['parent']
+              branch = repo['default_branch']
+              before = request('GET', '/repos/' + name + '/branches/' + quote(branch, safe=''))['commit']['sha']
+              source = request('GET', '/repos/' + parent['full_name'] + '/branches/' + quote(parent['default_branch'], safe=''))['commit']['sha']
+              # Compare pinned SHAs; files describe changes on the fork since the merge base.
+              diff = request('GET', '/repos/' + name + '/compare/' + source + '...' + before)
+              assert eligible(diff), 'User changes detected; automatic sync stopped'
+              if diff['behind_by'] == 0:
+                  print('UP_TO_DATE: ' + name + ' upstream=' + source)
+                  return
+              assert diff['status'] in ('behind', 'diverged'), 'Unexpected comparison'
+              # Never merge an upstream version of the executable maintenance workflow.
+              try:
+                  request('GET', '/repos/' + parent['full_name'] + '/contents/' + MANAGED + '?ref=' + source)
+              except HTTPError as error:
+                  if error.code != 404:
+                      raise
+              else:
+                  raise RuntimeError('Upstream uses managed workflow path; review required')
+              # GitHub performs a non-destructive merge; conflicts and protections fail closed.
+              merged = request('POST', '/repos/' + name + '/merges', {
+                  'base': branch, 'head': source,
+                  'commit_message': 'chore(sync): merge upstream ' + source[:12]})
+              after = request('GET', '/repos/' + name + '/branches/' + quote(branch, safe=''))['commit']['sha']
+              verify = request('GET', '/repos/' + name + '/compare/' + source + '...' + after)
+              assert verify['behind_by'] == 0, 'Upstream is not included in target'
+              print(json.dumps({'status': 'SYNCED', 'repo': name, 'before': before, 'upstream': source,
+                                'after': after, 'merge': merged.get('sha')}))
+          
+          if __name__ == '__main__':
+              main()
+          PY
