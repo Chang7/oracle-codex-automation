@@ -19,7 +19,7 @@ from typing import Any, Mapping, Sequence
 from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_POLICY_PATH = ROOT / "cos-release-policy.json"
+DEFAULT_POLICY_PATH = ROOT / "contracts" / "cos-release-policy.json"
 POLICY_SCHEMA = "codex.web-gpt.cos-release-policy/v1"
 REPORT_SCHEMA = "codex.web-gpt.cos-release-report/v1"
 RELEASE_MODE = "latest-stable-published"
