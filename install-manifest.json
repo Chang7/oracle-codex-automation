@@ -112,6 +112,8 @@
     "bin/codexpro_harness.py",
     "scripts/check_upstream_runtime_policy.py",
     "scripts/verify_upstream_runtime_maintainer.py",
+    "scripts/check_cos_release_policy.py",
+    "cos-release-policy.json",
     "upstream-runtime-policy.json",
     "upstream-runtime-maintainer-automation.json",
     "bin/codexpro_cloudflared_launchd.py",
