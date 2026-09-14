@@ -69,7 +69,7 @@ enable that separate execution surface.
 
 Chat On Steroids is checked separately because its authoritative stable channel
 is GitHub Releases rather than the npm-only v2 runtime policy above. The
-machine-readable policy is [`cos-release-policy.json`](../cos-release-policy.json),
+machine-readable policy is [`contracts/cos-release-policy.json`](../contracts/cos-release-policy.json),
 and `python scripts/check_cos_release_policy.py --installed-version <version>`
 performs a read-only candidate check.
 
